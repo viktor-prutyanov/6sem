@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <mpi.h>
 #include <stdlib.h>
@@ -9,6 +10,9 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size );
     MPI_Comm_rank(MPI_COMM_WORLD, &rank );
     double data = (rank == 0) ? 1337.0 : 0.0;
+
+    if (argc != 2)
+        return -1;
 
     int count = atoi(argv[1]);
 
@@ -26,6 +30,7 @@ int main(int argc, char *argv[])
             {
                 MPI_Recv(&data, 1, MPI_DOUBLE, size - 1, 0, MPI_COMM_WORLD, &status);
                 fprintf(stderr, "Received data = %lg in %d/%d\n", data++, rank, size);
+                sleep(1);
                 MPI_Send(&data, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
             }
         }
@@ -34,12 +39,16 @@ int main(int argc, char *argv[])
             MPI_Recv(&data, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &status);
             fprintf(stderr, "Received data = %lg in %d/%d\n", data++, rank, size);
             if (i < count - 1)
+            {
+                sleep(1);
                 MPI_Send(&data, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+            }
         }
         else
         {
             MPI_Recv(&data, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &status);
             fprintf(stderr, "Received data = %lg in %d/%d\n", data++, rank, size);
+            sleep(1);
             MPI_Send(&data, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
         }
     }

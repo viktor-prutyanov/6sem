@@ -75,6 +75,8 @@ uint32_t *bigMultiply(size_t *len_c, uint32_t *a, uint32_t *b, size_t len_a, siz
             return c;
         }
     }
+
+    return NULL;
 }
 
 uint32_t *treeMultiply(size_t *ans_len, unsigned int start, unsigned int end)

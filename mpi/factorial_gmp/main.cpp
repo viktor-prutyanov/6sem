@@ -63,6 +63,18 @@ unsigned long int get_ulong_opt(char *optarg)
     return arg;
 }
 
+mpz_class treeMultiply(unsigned int start, unsigned int end)
+{
+    if (start > end)
+        return 1;
+    else if (start == end)
+        return start;
+    else if (end - start == 1)
+        return (mpz_class)end * start;
+    int middle = (start + end) / 2;
+    return treeMultiply(start, middle) * treeMultiply(middle + 1, end);
+}
+
 int main(int argc, char *argv[])
 {  
     int size, rank;
@@ -93,11 +105,20 @@ int main(int argc, char *argv[])
         MPI_Finalize();
         return -1;
     }
-    
-    mpz_class a = 1;
 
-    for (uint32_t i = rank + 2; i <= num; i += size)
-        a *= i;
+    unsigned int start = 0;
+    unsigned int end = 0;
+    int remain_num = num;
+    for (int i = 0; i <= rank; ++i)
+    {
+        start = end + 1;
+        end = start + remain_num / (size - i) - 1;
+        remain_num -= remain_num / (size - i);
+    }
+
+    fprintf(stderr, "%d : %u;%u\n", rank, start, end);
+
+    mpz_class a = treeMultiply(start, end);
 
     std::vector<char> sendBuf;
     std::vector<char> recvBuf;
@@ -140,7 +161,7 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
-        FILE *out_file = fopen("answer.tmp", "wb");
+        FILE *out_file = fopen("answer.txt", "wb");
         gmp_fprintf(out_file, "%Zx\n", a.get_mpz_t(), 8);
         fclose(out_file);
     }
