@@ -1,23 +1,9 @@
-#include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <mpi.h>
 #include <functional>
 #include <vector>
 #include "Domain.h"
-
-double phi(double x)
-{
-    return (x == 0) ? 1 : 0;
-}
-
-double psi(double t)
-{
-    return 1;
-}
-
-double f(double x, double t)
-{
-    return 0;
-}
 
 int main(int argc, char *argv[])
 {
@@ -52,19 +38,32 @@ int main(int argc, char *argv[])
         solution.resize(Nx);
 
     /* Domain decomposition */
-    Domain domain(h, Nt, Nx, rank, size, phi, psi, f);
+    Domain domain(tau, h, Nx, rank, size);
     
-    for (long i = 0; i < Nt; ++i)
-        domain.Step(tau);
-
+    double t1 = MPI_Wtime();
+    domain.Run(Nt);
+    double t2 = MPI_Wtime(); 
+    
     domain.GatherDomains(&solution);
+       
+    std::cout << (t2 - t1) << std::endl;
 
+/*
     if (rank == 0)
     {
-        for (auto u : solution)
-            std::cout << u << " ";
-        std::cout << "\n";
-    }
+        std::ofstream data_file("answer.txt", std::ios::out | std::ios::trunc);
+        if (!data_file.is_open())
+        {
+            std::cout << "Unable to open file.\n";
+            return -1;
+        }
 
+        data_file << std::fixed;
+        for (auto u : solution)
+            data_file << u << "\n";
+
+        data_file.close();
+    }
+*/
     MPI_Finalize();
 }
