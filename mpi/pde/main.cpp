@@ -5,6 +5,21 @@
 #include <vector>
 #include "Domain.h"
 
+double phi(double x)
+{
+    return (x == 0) ? 1 : 0;
+}
+
+double psi(double t)
+{
+    return 1;
+}
+
+double f(double x, double t)
+{
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int size, rank;
@@ -38,15 +53,12 @@ int main(int argc, char *argv[])
         solution.resize(Nx);
 
     /* Domain decomposition */
-    Domain domain(tau, h, Nx, rank, size);
-    
-    double t1 = MPI_Wtime();
-    domain.Run(Nt);
-    double t2 = MPI_Wtime(); 
+    Domain domain(h, Nt, Nx, rank, size, phi, psi, f);
+
+    for (long i = 1; i < Nt; ++i)
+        domain.Step(tau);
     
     domain.GatherDomains(&solution);
-       
-    std::cout << (t2 - t1) << std::endl;
 
 /*
     if (rank == 0)
