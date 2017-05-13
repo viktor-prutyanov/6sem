@@ -4,6 +4,7 @@
 
 namespace vpstd
 {
+    template<typename _Res>
     class future 
     {
         public:
@@ -12,27 +13,32 @@ namespace vpstd
         future(const future&) = delete;
         future& operator=(future&& that) = default;
         ~future() = default;
-        friend future async(std::function<bool(int)> func, int arg);
-        bool get() 
+
+        template<typename _Fn, typename... _Args>
+        friend future<typename std::result_of<_Fn(_Args...)>::type> async(_Fn&&, _Args&&...);
+        
+        _Res get() 
         {
             th.join();
             return result;
         }
    
         private:
-        void wrapper(std::function<bool(int)> func, int arg) 
+        template<typename _Fn, typename... _Args>
+        void wrapper(_Fn&& f, _Args&&... args) 
         {
-            result = func(arg);
+            result = f(args...);
         }
     
-        bool result;
+        _Res result;
         std::thread th;
     };
-    
-    future async(std::function<bool(int)> func, int arg)
+   
+    template<typename _Fn, typename... _Args>
+    future<typename std::result_of<_Fn(_Args...)>::type> async(_Fn&& f, _Args&&... args)
     {
-        future fut;
-        fut.th = std::thread(&future::wrapper, &fut, func, arg);
+        future<typename std::result_of<_Fn(_Args...)>::type> fut;
+        fut.th = std::thread(&future<typename std::result_of<_Fn(_Args...)>::type>::wrapper<typename _Fn, typename... _Args>, &fut, f, args...);
         return fut;
     }
 }
