@@ -10,7 +10,7 @@ bool is_prime (int x) {
 }
 
 int main () {
-    vpstd::future fut = vpstd::async(is_prime, 313222313);
+    vpstd::future<bool> fut = vpstd::async(is_prime, 313222313);
 
     std::cout << "Checking whether 313222313 is prime.\n";
 
